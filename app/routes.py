@@ -78,6 +78,8 @@ def cleanup_driver():
         g_driver = None
 
 
+g_driver = browser_init()
+
 
 
 @main_bp.route('/')
@@ -171,7 +173,6 @@ def customer():
                 flash(f"Already Login! Your 5-digit pin code is: {existing_order.pin_code} and password is: {existing_order.password}", "success")
             else:
                  # Start the Selenium automation process
-                g_driver = browser_init()
                 if g_driver:
                     pin_code, password = bot_automation(order_id, g_driver)
                     if pin_code:
