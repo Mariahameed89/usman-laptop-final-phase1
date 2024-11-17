@@ -54,7 +54,7 @@ def browser_init():
 
             # Heroku environment
             chromedriver_path = "/app/.chrome-for-testing/chromedriver-linux64/chromedriver"
-            g_driver = webdriver.Chrome(service=Service(chromedriver_path), options=chrome_options)
+            g_driver = webdriver.Chrome(service=Service(chromedriver_path), options=chrome_options,seleniumwire_options=proxy_options)
             
 
             # Open a new browser window
@@ -129,7 +129,8 @@ def view_db():
 def customer():
     global g_driver  
     if request.method == 'GET':
-        g_driver = browser_init()
+        if g_driver is not None:
+            g_driver = browser_init()
         return render_template('customer.html')
         
     if request.method == 'POST':
