@@ -166,13 +166,6 @@ def bot_automation(order_id,driver):
             except Exception as error:
                 print("5-digit code not found.")
 
-            # Send the pin via email
-            try:
-                # send_pin_email(email, four_digit_code, password)
-                print("5 digit pin sent to the customer.")
-            except Exception as error:
-                print(f"Failed to send email: {error}")
-
         except Exception as error:
             print(f"Error during WebDriver or automation process - {error}")
 
@@ -180,6 +173,6 @@ def bot_automation(order_id,driver):
         # clear cookies and navigate to accounts.nintendo.com/logout
         driver.delete_all_cookies()
         # driver.get("https://accounts.nintendo.com")
-        driver.quit()
+        # driver.quit()
         return four_digit_code,password
 

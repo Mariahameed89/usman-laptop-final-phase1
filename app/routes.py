@@ -42,7 +42,7 @@ def browser_init():
             }
             # Set Chrome options
             chrome_options = Options()
-            chrome_options.add_argument("--headless=new")
+            # chrome_options.add_argument("--headless=new")
             chrome_options.add_argument("--disable-extensions")
             chrome_options.add_argument("--no-sandbox")
             chrome_options.add_argument("--disable-gpu")
@@ -51,9 +51,7 @@ def browser_init():
             chrome_options.add_argument("--disable-blink-features=AutomationControlled")
             chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
 
-            # chrome_options.add_argument(f'--proxy-server=http://{proxy_address}:{proxy_port}')
-            # chrome_options.add_argument(f'--proxy-auth={proxy_username}:{proxy_password}')
-            # Set up the WebDriver
+          
             # local environment
             # g_driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
 
@@ -68,7 +66,7 @@ def browser_init():
             g_driver.get('https://accounts.nintendo.com')
 
             # Clean up the WebDriver when the application exits
-            # atexit.register(cleanup_driver)
+            atexit.register(cleanup_driver)
 
             print('Chrome started successfully!')
         except Exception as error:
@@ -82,6 +80,11 @@ def cleanup_driver():
         g_driver.quit()
         g_driver = None
 
+
+# check if there is any g_driver instance running and close it
+cleanup_driver()
+if g_driver is None:
+    g_driver = browser_init()
 
 
 
@@ -122,6 +125,7 @@ def save():
 
 
 
+
 @main_bp.route('/view_db')
 def view_db():
     orders = Order.query.all()
@@ -132,77 +136,80 @@ def view_db():
 @main_bp.route('/', methods=['GET', 'POST'])
 @main_bp.route('/customer', methods=['GET', 'POST'])
 def customer():
-    global g_driver  
-    if request.method == 'GET':
-        g_driver = browser_init()
-        return render_template('customer.html')
-        
-    if request.method == 'POST':
-        order_id = request.form['order_id']
-        access_code = request.form.get('access_code')
-        email = request.form['email']
+    try:
+        if request.method == 'POST':
+            order_id = request.form['order_id']
+            access_code = request.form.get('access_code')
+            email = request.form['email']
 
-        # Ensure that access_code is provided
-        if not access_code:
-            flash("Access code is required!", "error")
-            return redirect(url_for('main.customer'))
-
-        # check if order_id, access_code are there
-        is_order_id = Order.query.filter_by(order_id=order_id).first()
-        if is_order_id:
-            # now check if already has pin_code
-            is_pin_code = is_order_id.pin_code
-            existing_password = is_order_id.password
-            if is_pin_code:
-                # return password
-                flash(f"{existing_password}", "info")
+            # Ensure that access_code is provided
+            if not access_code:
+                flash("Access code is required!", "error")
                 return redirect(url_for('main.customer'))
 
-        # Check if the order_id and email exist in the database
-        existing_order = Order.query.filter_by(order_id=order_id).first()
+            # check if order_id, access_code are there
+            is_order_id = Order.query.filter_by(order_id=order_id).first()
+            if is_order_id:
+                # now check if already has pin_code
+                is_pin_code = is_order_id.pin_code
+                existing_password = is_order_id.password
+                if is_pin_code:
+                    # return password
+                    flash(f"{existing_password}", "info")
+                    return redirect(url_for('main.customer'))
+
+            # Check if the order_id and email exist in the database
+            existing_order = Order.query.filter_by(order_id=order_id).first()
 
 
 
-        if existing_order:
-            # Update access_code and email if the order already exists
-            existing_order.access_code = access_code
-            existing_order.email = email
-            db.session.commit()
-            print("access code",access_code)
+            if existing_order:
+                # Update access_code and email if the order already exists
+                existing_order.access_code = access_code
+                existing_order.email = email
+                db.session.commit()
+                print("access code",access_code)
 
-            # flash("Order updated successfully!", "success")
+                # flash("Order updated successfully!", "success")
 
 
-            # Check if automation has already been performed
-            if existing_order.pin_code:
+                # Check if automation has already been performed
+                if existing_order.pin_code:
 
-                print("pin_code",existing_order.pin_code)
+                    print("pin_code",existing_order.pin_code)
 
-                # If pin_code exists, return it along with the stored password
-                flash(f"Already Login! Your 5-digit pin code is: {existing_order.pin_code} and password is: {existing_order.password}", "success")
+                    # If pin_code exists, return it along with the stored password
+                    flash(f"Already Login! Your 5-digit pin code is: {existing_order.pin_code} and password is: {existing_order.password}", "success")
+                else:
+                    # Start the Selenium automation process
+                    if g_driver:
+                        pin_code, password = bot_automation(order_id, g_driver)
+                        if pin_code:
+                            # Save the generated pin_code and password
+                            existing_order.pin_code = pin_code
+                            existing_order.password = password
+                            db.session.commit()
+                            flash(f"Your 5-digit pin code is: {pin_code}  {password}", "success")
+                        else:
+                            flash("Access code expired.....", "error")
+                            # navigate to the login page
+                            
             else:
-                 # Start the Selenium automation process
-                if g_driver:
-                    pin_code, password = bot_automation(order_id, g_driver)
-                    if pin_code:
-                        # Save the generated pin_code and password
-                        existing_order.pin_code = pin_code
-                        existing_order.password = password
-                        db.session.commit()
-                        flash(f"Your 5-digit pin code is: {pin_code}  {password}", "success")
-                        if g_driver:
-                            g_driver.quit()
-                            g_driver = None
-                    else:
-                        flash("Access code expired.....", "error")
-        else:
-            # Show an error message if no matching order_id is found
-            flash("Order ID not found. Please check your details and try again.", "error")
+                # Show an error message if no matching order_id is found
+                flash("Order ID not found. Please check your details and try again.", "error")
 
 
-        return redirect(url_for('main.customer'))
+            return redirect(url_for('main.customer'))
 
-    return render_template('customer.html')
+        return render_template('customer.html')
+    except Exception as e:
+        print(e)
+        return render_template('customer.html')
+    finally:
+        if g_driver:
+            g_driver.delete_all_cookies()
+            g_driver.get('https://accounts.nintendo.com')
+
 
 
 @main_bp.route('/print_orders')
