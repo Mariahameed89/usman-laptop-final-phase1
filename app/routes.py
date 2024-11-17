@@ -125,7 +125,6 @@ def save():
 
 
 
-
 @main_bp.route('/view_db')
 def view_db():
     orders = Order.query.all()
