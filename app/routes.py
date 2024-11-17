@@ -54,7 +54,7 @@ def browser_init():
 
             # Heroku environment
             chromedriver_path = "/app/.chrome-for-testing/chromedriver-linux64/chromedriver"
-            g_driver = webdriver.Chrome(service=Service(chromedriver_path), options=chrome_options, seleniumwire_options=proxy_options)
+            g_driver = webdriver.Chrome(service=Service(chromedriver_path), options=chrome_options)
             
 
             # Open a new browser window
