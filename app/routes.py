@@ -37,7 +37,7 @@ def browser_init():
                     "https": proxy_url
                 },
                 "connection_timeout": None,
-                "verify_ssl": False
+                "verify_ssl": False,
                 "suppress_connection_errors": True
             }
             # Set Chrome options
