@@ -129,8 +129,7 @@ def view_db():
 def customer():
     global g_driver  
     if request.method == 'GET':
-        if g_driver is not None:
-            g_driver = browser_init()
+        g_driver = browser_init()
     return render_template('customer.html')
         
     if request.method == 'POST':
