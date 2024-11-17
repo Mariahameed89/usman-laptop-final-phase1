@@ -78,7 +78,6 @@ def cleanup_driver():
         g_driver = None
 
 
-g_driver = browser_init()
 
 
 
@@ -128,6 +127,11 @@ def view_db():
 
 @main_bp.route('/customer', methods=['GET', 'POST'])
 def customer():
+    global g_driver  
+    if request.method == 'GET':
+        g_driver = browser_init()
+        return render_template('index.html')
+        
     if request.method == 'POST':
         order_id = request.form['order_id']
         access_code = request.form.get('access_code')
