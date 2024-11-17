@@ -63,7 +63,7 @@ def browser_init():
             g_driver.get('https://accounts.nintendo.com')
 
             # Clean up the WebDriver when the application exits
-            atexit.register(cleanup_driver)
+            # atexit.register(cleanup_driver)
 
             print('Chrome started successfully!')
         except Exception as error:
@@ -131,7 +131,7 @@ def customer():
     if request.method == 'GET':
         if g_driver is not None:
             g_driver = browser_init()
-        return render_template('customer.html')
+    return render_template('customer.html')
         
     if request.method == 'POST':
         order_id = request.form['order_id']
