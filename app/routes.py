@@ -190,6 +190,9 @@ def customer():
                         existing_order.password = password
                         db.session.commit()
                         flash(f"Your 5-digit pin code is: {pin_code}  {password}", "success")
+                        if g_driver:
+                            g_driver.quit()
+                            g_driver = None
                     else:
                         flash("Access code expired.....", "error")
         else:
