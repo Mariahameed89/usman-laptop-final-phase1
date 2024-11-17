@@ -135,7 +135,7 @@ def customer():
     global g_driver  
     if request.method == 'GET':
         g_driver = browser_init()
-    return render_template('customer.html')
+        return render_template('customer.html')
         
     if request.method == 'POST':
         order_id = request.form['order_id']
