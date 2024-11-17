@@ -5,8 +5,8 @@ from .models import Order
 from .email_utils import send_admin_email, send_pin_email, send_order_email
 from .automation import bot_automation
 from . import db
-# from seleniumwire import webdriver
-from selenium import webdriver
+from seleniumwire import webdriver
+# from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -51,15 +51,15 @@ def browser_init():
             chrome_options.add_argument("--disable-blink-features=AutomationControlled")
             chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
 
-            chrome_options.add_argument(f'--proxy-server=http://{proxy_address}:{proxy_port}')
-            chrome_options.add_argument(f'--proxy-auth={proxy_username}:{proxy_password}')
+            # chrome_options.add_argument(f'--proxy-server=http://{proxy_address}:{proxy_port}')
+            # chrome_options.add_argument(f'--proxy-auth={proxy_username}:{proxy_password}')
             # Set up the WebDriver
             # local environment
             # g_driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
 
             # Heroku environment
             chromedriver_path = "/app/.chrome-for-testing/chromedriver-linux64/chromedriver"
-            g_driver = webdriver.Chrome(service=Service(chromedriver_path), options=chrome_options)
+            g_driver = webdriver.Chrome(service=Service(chromedriver_path), options=chrome_options,seleniumwire_options=proxy_options)
             
 
             # Open a new browser window
