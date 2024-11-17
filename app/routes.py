@@ -88,7 +88,7 @@ def cleanup_driver():
 
 @main_bp.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('customer.html')
 
 @main_bp.route('/save', methods=['POST'])
 def save():
