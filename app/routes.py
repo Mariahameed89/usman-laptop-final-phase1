@@ -86,7 +86,7 @@ def cleanup_driver():
 
 
 
-@main_bp.route('/')
+@main_bp.route('/admin')
 def index():
     return render_template('index.html')
 
@@ -129,7 +129,7 @@ def view_db():
 
 
 
-
+@main_bp.route('/', methods=['GET', 'POST'])
 @main_bp.route('/customer', methods=['GET', 'POST'])
 def customer():
     global g_driver  
