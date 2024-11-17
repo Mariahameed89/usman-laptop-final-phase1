@@ -179,6 +179,7 @@ def bot_automation(order_id,driver):
     finally:
         # clear cookies and navigate to accounts.nintendo.com/logout
         driver.delete_all_cookies()
-        driver.get("https://accounts.nintendo.com")
+        # driver.get("https://accounts.nintendo.com")
+        driver.quit()
         return four_digit_code,password
 
