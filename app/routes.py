@@ -16,62 +16,57 @@ import atexit
 
 main_bp = Blueprint('main', __name__)
 
-g_driver = None
-
 def browser_init():
-    global g_driver
-    if g_driver is None:
-        try:
-            proxy_username = "9fa3c330655cbd7ee012"
-            proxy_password = "3607b7d7a975d149"
-            proxy_address = "gw.dataimpulse.com"
-            proxy_port = "14000"
+    try:
+        proxy_username = "9fa3c330655cbd7ee012"
+        proxy_password = "3607b7d7a975d149"
+        proxy_address = "gw.dataimpulse.com"
+        proxy_port = "14000"
 
-            # formulate the proxy url with authentication for dataimpulse
-            proxy_url = f"http://{proxy_username}:{proxy_password}@{proxy_address}:{proxy_port}"
+        # formulate the proxy url with authentication for dataimpulse
+        proxy_url = f"http://{proxy_username}:{proxy_password}@{proxy_address}:{proxy_port}"
 
-            # Set proxy options for SeleniumWire
-            proxy_options = {
-                "proxy": {
-                    "http": proxy_url,
-                    "https": proxy_url
-                }
+        # Set proxy options for SeleniumWire
+        proxy_options = {
+            "proxy": {
+                "http": proxy_url,
+                "https": proxy_url
             }
-            # Set Chrome options
-            chrome_options = Options()
-            chrome_options.add_argument("--headless=new")
-            chrome_options.add_argument("--disable-extensions")
-            chrome_options.add_argument("--no-sandbox")
-            chrome_options.add_argument("--disable-gpu")
-            chrome_options.add_argument("--disable-dev-shm-usage")
-            chrome_options.add_argument("--ignore-certificate-errors")
-            chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-            chrome_options.add_argument('--ignore-certificate-errors-spki-list')
-            chrome_options.add_argument('--ignore-ssl-errors')
-            chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+        }
+        # Set Chrome options
+        chrome_options = Options()
+        chrome_options.add_argument("--headless=new")
+        chrome_options.add_argument("--disable-extensions")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--ignore-certificate-errors")
+        chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+        chrome_options.add_argument('--ignore-certificate-errors-spki-list')
+        chrome_options.add_argument('--ignore-ssl-errors')
+        chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
 
-          
-            # local environment
-            # g_driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+        
+        # local environment
+        # g_driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
 
-            # Heroku environment
-            chromedriver_path = "/app/.chrome-for-testing/chromedriver-linux64/chromedriver"
-            g_driver = webdriver.Chrome(service=Service(chromedriver_path), options=chrome_options,seleniumwire_options=proxy_options)
-            
+        # Heroku environment
+        chromedriver_path = "/app/.chrome-for-testing/chromedriver-linux64/chromedriver"
+        g_driver = webdriver.Chrome(service=Service(chromedriver_path), options=chrome_options,seleniumwire_options=proxy_options)
+        
 
-            # Open a new browser window
-            g_driver.execute_script("window.open('');")
-            g_driver.switch_to.window(g_driver.window_handles[0])
-            g_driver.get('https://accounts.nintendo.com')
+        g_driver.get('https://accounts.nintendo.com')
 
-            # Clean up the WebDriver when the application exits
-            atexit.register(cleanup_driver)
+        # Clean up the WebDriver when the application exits
+        atexit.register(cleanup_driver)
 
-            print('Chrome started successfully!')
-        except Exception as error:
-            print(f"Error during WebDriver or automation process - {error}")
-            g_driver = None
-    return g_driver
+        print('Chrome started successfully!')
+
+        return g_driver
+    except Exception as error:
+        print(f"Error during WebDriver or automation process - {error}")
+        return None
+        
 
 def cleanup_driver():
     global g_driver
@@ -79,11 +74,6 @@ def cleanup_driver():
         g_driver.quit()
         g_driver = None
 
-
-# check if there is any g_driver instance running and close it
-cleanup_driver()
-if g_driver is None:
-    g_driver = browser_init()
 
 
 
@@ -180,17 +170,17 @@ def customer():
                     flash(f"Already Login! Your 5-digit pin code is: {existing_order.pin_code} and password is: {existing_order.password}", "success")
                 else:
                     # Start the Selenium automation process
-                    if g_driver:
-                        pin_code, password = bot_automation(order_id, g_driver)
-                        if pin_code:
-                            # Save the generated pin_code and password
-                            existing_order.pin_code = pin_code
-                            existing_order.password = password
-                            db.session.commit()
-                            flash(f"Your 5-digit pin code is: {pin_code}  {password}", "success")
-                        else:
-                            flash("Access code expired.....", "error")
-                            # navigate to the login page
+                    g_driver = browser_init()
+                    pin_code, password = bot_automation(order_id, g_driver)
+                    if pin_code:
+                        # Save the generated pin_code and password
+                        existing_order.pin_code = pin_code
+                        existing_order.password = password
+                        db.session.commit()
+                        flash(f"Your 5-digit pin code is: {pin_code}  {password}", "success")
+                    else:
+                        flash("Access code expired.....", "error")
+                        # navigate to the login page
                             
             else:
                 # Show an error message if no matching order_id is found
@@ -205,8 +195,10 @@ def customer():
         return render_template('customer.html')
     finally:
         if g_driver:
-            g_driver.delete_all_cookies()
-            g_driver.get('https://accounts.nintendo.com')
+            g_driver.quit()
+            print('Chrome stopped successfully!')
+            # g_driver.delete_all_cookies()
+            # g_driver.get('https://accounts.nintendo.com')
 
 
 
