@@ -57,9 +57,6 @@ def browser_init():
 
         g_driver.get('https://accounts.nintendo.com')
 
-        # Clean up the WebDriver when the application exits
-        atexit.register(cleanup_driver)
-
         print('Chrome started successfully!')
 
         return g_driver
@@ -67,13 +64,6 @@ def browser_init():
         print(f"Error during WebDriver or automation process - {error}")
         return None
         
-
-def cleanup_driver():
-    global g_driver
-    if g_driver is not None:
-        g_driver.quit()
-        g_driver = None
-
 
 
 
@@ -170,8 +160,8 @@ def customer():
                     flash(f"Already Login! Your 5-digit pin code is: {existing_order.pin_code} and password is: {existing_order.password}", "success")
                 else:
                     # Start the Selenium automation process
-                    g_driver = browser_init()
-                    pin_code, password = bot_automation(order_id, g_driver)
+                    driver = browser_init()
+                    pin_code, password = bot_automation(order_id, driver)
                     if pin_code:
                         # Save the generated pin_code and password
                         existing_order.pin_code = pin_code
