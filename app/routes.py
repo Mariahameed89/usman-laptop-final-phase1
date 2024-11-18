@@ -173,8 +173,8 @@ def customer():
             # Start threads
             threading.Thread(target=run_automation).start()
             
-            # sleep for 25 seconds
-            sleep(25)
+            # sleep for 10 seconds
+            sleep(10)
             flash("Process has started. You can resubmit the form to get pin code.", "notification")
 
             return redirect(url_for('main.customer'))
