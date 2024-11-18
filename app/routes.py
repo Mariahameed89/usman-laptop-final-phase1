@@ -12,7 +12,10 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 import random
 import atexit
-
+from flask import copy_current_request_context
+import threading
+from time import sleep
+from sqlalchemy.orm import scoped_session, sessionmaker
 
 main_bp = Blueprint('main', __name__)
 
@@ -48,7 +51,7 @@ def browser_init():
 
         
         # local environment
-        # g_driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+        # g_driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options,seleniumwire_options=proxy_options)
 
         # Heroku environment
         chromedriver_path = "/app/.chrome-for-testing/chromedriver-linux64/chromedriver"
@@ -109,8 +112,6 @@ def view_db():
     orders = Order.query.all()
     return render_template('view_db.html', orders=orders)
 
-
-
 @main_bp.route('/', methods=['GET', 'POST'])
 @main_bp.route('/customer', methods=['GET', 'POST'])
 def customer():
@@ -125,68 +126,65 @@ def customer():
                 flash("Access code is required!", "error")
                 return redirect(url_for('main.customer'))
 
-            # check if order_id, access_code are there
-            is_order_id = Order.query.filter_by(order_id=order_id).first()
-            if is_order_id:
-                # now check if already has pin_code
-                is_pin_code = is_order_id.pin_code
-                existing_password = is_order_id.password
-                if is_pin_code:
-                    # return password
-                    flash(f"{existing_password}", "info")
-                    return redirect(url_for('main.customer'))
-
-            # Check if the order_id and email exist in the database
+            # Check if order_id exists
             existing_order = Order.query.filter_by(order_id=order_id).first()
-
-
-
-            if existing_order:
-                # Update access_code and email if the order already exists
-                existing_order.access_code = access_code
-                existing_order.email = email
-                db.session.commit()
-                print("access code",access_code)
-
-                # flash("Order updated successfully!", "success")
-
-
-                # Check if automation has already been performed
-                if existing_order.pin_code:
-
-                    print("pin_code",existing_order.pin_code)
-
-                    # If pin_code exists, return it along with the stored password
-                    flash(f"Already Login! Your 5-digit pin code is: {existing_order.pin_code} and password is: {existing_order.password}", "success")
-                else:
-                    # Start the Selenium automation process
-                    driver = browser_init()
-                    pin_code, password = bot_automation(order_id, driver)
-                    if pin_code:
-                        # Save the generated pin_code and password
-                        existing_order.pin_code = pin_code
-                        existing_order.password = password
-                        db.session.commit()
-                        flash(f"Your 5-digit pin code is: {pin_code}  {password}", "success")
-                    else:
-                        flash("Access code expired.....", "error")
-                        # navigate to the login page
-                            
-            else:
-                # Show an error message if no matching order_id is found
+            if not existing_order:
                 flash("Order ID not found. Please check your details and try again.", "error")
+                return redirect(url_for('main.customer'))
 
+            # Update access_code and email
+            existing_order.access_code = access_code
+            existing_order.email = email
+            db.session.commit()
+
+            # If already logged in, show credentials
+            if existing_order.pin_code:
+                flash(f"Already Login! Your 5-digit pin code is: {existing_order.pin_code} and password is: {existing_order.password}", "success")
+                return redirect(url_for('main.customer'))
+
+            # Thread for the automation process
+            @copy_current_request_context
+            def run_automation():
+                try:
+                    webdriver = browser_init()
+                    four_digit_code, password = bot_automation(order_id, webdriver)
+
+                    print(f"Received pin_code: {four_digit_code} and password: {password}")
+                    if four_digit_code:                      
+                        try:
+                            # generate a new database session for this thread
+                            Session = sessionmaker(bind=db.engine)
+                            session = Session()
+                            order = session.query(Order).filter_by(order_id=order_id).first()
+                            order.pin_code = four_digit_code
+                            order.password = password
+                            session.commit()
+                            print("Order updated successfully!")
+                        except Exception as e:
+                            print(f"Error updating order: {e}")
+                        finally:
+                            session.close()
+
+
+
+                except Exception as e:
+                    print(f"Automation failed: {e}")
+
+            # Start threads
+            threading.Thread(target=run_automation).start()
+            
+            # sleep for 25 seconds
+            sleep(25)
+            flash("Process has started. You can resubmit the form to get pin code.", "notification")
 
             return redirect(url_for('main.customer'))
 
         return render_template('customer.html')
-    except Exception as e:
-        print(e)
-        return render_template('customer.html')
-    finally:
-        pass
-        # driver.quit()
 
+    except Exception as e:
+        print(f"Error in processing: {e}")
+        flash("An error occurred. Please try again.", "error")
+        return redirect(url_for('main.customer'))
 
 
 @main_bp.route('/print_orders')

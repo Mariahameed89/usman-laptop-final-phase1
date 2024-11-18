@@ -93,6 +93,15 @@
             align-items: center;
             flex-direction: column;
         }
+
+        .notificationMessage {
+            height: max-content;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
         .close-btn {
             background-color: #f8b400;
             color: #000;
@@ -130,7 +139,7 @@
             <label for="order_id">Order ID:</label>
             <input type="text" name="order_id" required>
             <label for="email">Email:</label>
-            <input type="email" name="email" required>
+            <input type="email" name="email" require>
             <label for="access_code">Access Code:</label>
             <input type="text" name="access_code" id="access_code" required maxlength="8" pattern="[A-Z]{8}" title="Access code must be 8 uppercase letters only." oninput="this.value = this.value.toUpperCase();">
             <input type="submit" value="Submit">
@@ -169,6 +178,15 @@
                 <p id="infoMessage" style="padding: 0px 0px;" class="infoMessage"
                 ></p>
                 <button class="close-btn" onclick="closeInfoPopup()">Close</button>
+            </div>
+        </div>
+
+        <!-- notification Popup -->
+        <div class="popup-overlay" id="notificationPopup" style="display: none;">
+            <div class="popup-content">
+                <h2>Notification</h2>
+                <p id="notificationMessage"></p>
+                <button class="close-btn" onclick="closeNotificationPopup()">Close</button>
             </div>
         </div>
 
@@ -236,6 +254,40 @@
     });
 </script>
 
+        {% elif category == 'notification' %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    document.getElementById('notificationMessage').innerText = {{ message|tojson }};
+                    document.getElementById('notificationPopup').style.display = 'flex';
+
+                    // retrieve orderId, email and access code from local storage
+                    let orderId = localStorage.getItem('orderId');
+                    let email = localStorage.getItem('email');
+                    let accessCode = localStorage.getItem('accessCode');
+
+                    // fill up the form and remove the local storage
+                    document.getElementById('requestForm').elements['order_id'].value = orderId;
+                    document.getElementById('requestForm').elements['email'].value = email;
+                    document.getElementById('requestForm').elements['access_code'].value = accessCode;
+
+                    localStorage.removeItem('orderId');
+                    localStorage.removeItem('email');
+                    localStorage.removeItem('accessCode');
+
+                    //  <!-- start a timer from 45 seconds backward -->
+                    let timeleft = 45;
+                    // show timer and message that processing will be completed within 45 seconds and do not close the browser
+                    let downloadTimer = setInterval(function(){
+                        document.getElementById("notificationMessage").innerHTML = `Processing will be completed within ${timeleft} seconds. Please do not close the browser.`;
+                        timeleft -= 1;
+                        if(timeleft <= 0){
+                            clearInterval(downloadTimer);
+                            document.getElementById("notificationMessage").innerHTML = "Pin Code generated successfully. Please submit the form with same Order ID and Email to get the Pin Code.";
+                        }
+                    }, 1000);
+                });
+            </script>
+
 
 
 
@@ -259,8 +311,16 @@
             document.getElementById('infoPopup').style.display = 'none';
         }
 
+        function closeNotificationPopup() {
+            document.getElementById('notificationPopup').style.display = 'none';
+        }
+
         function showProcessingPopup(event) {
             document.getElementById('processingPopup').style.display = 'flex';
+            // save orderId, email and access code in local storage 
+            localStorage.setItem('orderId', document.getElementById('requestForm').elements['order_id'].value);
+            localStorage.setItem('email', document.getElementById('requestForm').elements['email'].value);
+            localStorage.setItem('accessCode', document.getElementById('requestForm').elements['access_code'].value);
             // Allow the form to submit after a short delay
             setTimeout(function() {
                 return true;

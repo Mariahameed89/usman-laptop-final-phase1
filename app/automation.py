@@ -84,7 +84,7 @@ def bot_automation(order_id,driver):
             ### At this point the user should be logged in automatically ###
 
                 
-            print("Navigating to the access code page")
+            print(f"Navigating using access code: {access_code}")
             # Navigate to the target URL
             target_url = f"https://accounts.nintendo.com/login/device?access_key={access_code}"
             driver.get(target_url)
@@ -100,6 +100,7 @@ def bot_automation(order_id,driver):
             if "The access code may have expired. Please try again later." in driver.page_source:
                 # throw an exception to exit the automation
                 raise Exception("The access code may have expired. Please try again later.")
+        
             
             if "expired" in driver.page_source:
                 print("Access code has expired. Exiting automation...")
@@ -144,6 +145,9 @@ def bot_automation(order_id,driver):
 
             # Check for the "Select this account" button and click it if found
             try:
+                # throw an exception to exit the automation
+                if "This page cannot be displayed" in driver.page_source:
+                    raise Exception("Error after entering access code. This page cannot be displayed.")
                 select_account_button = WebDriverWait(driver, 10).until(
                     EC.element_to_be_clickable((By.ID, "choose-connect-button"))
                 )
@@ -162,7 +166,7 @@ def bot_automation(order_id,driver):
                 time.sleep(2)
                 four_digit_code = code_element.text
                 print(f"5-digit code is: {four_digit_code}")
-                print("5-digit code saved successfully!")
+
             except Exception as error:
                 print("5-digit code not found.")
 
