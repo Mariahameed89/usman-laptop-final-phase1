@@ -184,11 +184,8 @@ def customer():
         print(e)
         return render_template('customer.html')
     finally:
-        if g_driver:
-            g_driver.quit()
-            print('Chrome stopped successfully!')
-            # g_driver.delete_all_cookies()
-            # g_driver.get('https://accounts.nintendo.com')
+        pass
+        # driver.quit()
 
 
 
