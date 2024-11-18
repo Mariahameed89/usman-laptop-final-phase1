@@ -21,7 +21,7 @@ def browser_init():
         proxy_username = "9fa3c330655cbd7ee012"
         proxy_password = "3607b7d7a975d149"
         proxy_address = "gw.dataimpulse.com"
-        proxy_port = "14000"
+        proxy_port = "16000"
 
         # formulate the proxy url with authentication for dataimpulse
         proxy_url = f"http://{proxy_username}:{proxy_password}@{proxy_address}:{proxy_port}"
