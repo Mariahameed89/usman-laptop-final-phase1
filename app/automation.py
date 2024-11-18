@@ -107,14 +107,14 @@ def bot_automation(order_id,driver):
 
             try:
                 # Wait until the password field is present and visible
-                password_field = WebDriverWait(driver, 2).until(
+                password_field = WebDriverWait(driver, 10).until(
                     EC.visibility_of_element_located((By.ID, "reauthenticate-form_pc_input_0"))
                 )
                 print("First Password field found!")
 
                 # if field with that id is not found then search for reauthenticate-form_pc_input_0
                 if not password_field:
-                    password_field = WebDriverWait(driver, 2).until(
+                    password_field = WebDriverWait(driver, 10).until(
                         EC.visibility_of_element_located((By.ID, "reauthenticate-form_pc_input_0"))
                     )
                     print("Second Password field found!")
