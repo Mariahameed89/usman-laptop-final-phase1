@@ -8,3 +8,4 @@ SQLAlchemy==2.0.36
 blinker==1.7.0
 selenium-wire==5.1.0
 Flask-Migrate==4.0.7
+psycopg2-binary==2.9.10
